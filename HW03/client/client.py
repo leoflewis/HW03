@@ -13,6 +13,8 @@ connection.send(name.encode())
 
 def PM():
 	connection.send(("PM").encode())
+	x = input()
+	connection.send(x.encode())
 
 def DM():
 	connection.send(("DM").encode())

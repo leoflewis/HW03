@@ -6,14 +6,14 @@ import sys
 
 server = socket(AF_INET, SOCK_STREAM)
 
-serverPort = 56003
+serverPort = 56004
 server.bind(('',serverPort))
 server.listen(100)
 
-list_of_clients = []
+clients = {}
 
-def clientThread(conn, addr):
-	name = conn.recv(1024).decode()
+def clientThread(conn, addr, name):
+	
 	conn.send(("Welcome to this chatroom " + name + "!").encode())
 	while True:
 		try:
@@ -22,34 +22,48 @@ def clientThread(conn, addr):
 			if message == "EX":
 				EX(conn)
 				return
-			
-			elif message:
-				print(name + ": " + message)
-				response = "Recieved " + message
-				broadcast(response, conn)
+				
+			if message == "PM":
+				PM(conn)
+				
+			if message == "DM":
+				DM(conn)
+
 		except:
 			remove(conn)
 			server.close()
 				
 def EX(conn):
 	remove(conn)
+	
+def PM(conn):
+	conn.send(("Please Enter Public Message: ").encode())
+	message = conn.recv(2048).decode()
+	broadcast(message, conn)
+	
+def DM(message):
+	conn.send(("Please Enter Direct Message: ").encode())
 
 def broadcast(message, connection):
-	for client in list_of_clients:
-		if client != connection:
-			client.send(message.encode())
+
+	for x in clients:
+		if connection != x:
+			x.send(message.encode())
 
 def remove(connection):
-	if connection in list_of_clients:
-		list_of_clients.remove(connection)
-		connection.close()
-		
+	print(clients[connection] + " disconnected")
+	connection.close()
+	del clients[connection]
+	
 		
 while True:
 	conn, addr = server.accept()
-	list_of_clients.append(conn)
-	print(addr[0] + " connected")
-	thread = Thread(target = clientThread,args = (conn,addr))
+	name = conn.recv(1024).decode()
+	
+	clients[conn] = name
+	
+	print(name + " connected")
+	thread = Thread(target = clientThread,args = (conn,addr,name))
 	thread.start()
 
 server.close()
