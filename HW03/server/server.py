@@ -7,7 +7,7 @@ import sys
 
 server = socket(AF_INET, SOCK_STREAM)
 
-serverPort = 56004
+serverPort = 56003
 server.bind(('',serverPort))
 server.listen(100)
 
@@ -49,7 +49,10 @@ def broadcast(message, connection):
 
 	for x in clients:
 		if connection != x:
+			message = "Incoming PM: " + message + "\n"
 			x.send(message.encode())
+		else:
+			x.send(("Public Message: '" + message + "' Sent to all users\n").encode())
 
 def remove(connection):
 	print(clients[connection] + " disconnected")

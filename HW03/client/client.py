@@ -1,6 +1,7 @@
 #Client
 from socket import *
 from threading import *
+import time
 import sys
 
 connection = socket(AF_INET, SOCK_STREAM)
@@ -12,11 +13,14 @@ connection.connect((hostname, port))
 connection.send(name.encode())
 
 def PM():
+	print("\n")
 	connection.send(("PM").encode())
 	x = input()
 	connection.send(x.encode())
+	time.sleep(.5)
 
 def DM():
+	print("\n")
 	connection.send(("DM").encode())
 
 def EX():
@@ -31,11 +35,11 @@ def userInput():
 
 		print("Please enter a command!")
 		x = input()
-		if x == "PM":
+		if x == "PM" or x == "Pm" or x == "pM" or x == "pm":
 			PM()
-		elif x == "DM":
+		elif x == "DM" or x == "Dm" or x == "dM" or x == "dm":
 			DM()
-		elif x == "EX":
+		elif x == "EX" or x == "Ex" or x == "eX" or x == "ex":
 			EX()
 		else:
 			print("Invalid Command!")
