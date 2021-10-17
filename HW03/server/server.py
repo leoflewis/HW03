@@ -7,7 +7,7 @@ import sys
 
 server = socket(AF_INET, SOCK_STREAM)
 
-serverPort = 56003
+serverPort = 56004
 server.bind(('',serverPort))
 server.listen(100)
 
@@ -15,7 +15,7 @@ clients = {}
 
 def clientThread(conn, addr, name):
 	
-	conn.send(("Welcome to this chatroom " + name + "!").encode())
+	conn.send(("DWelcome to this chatroom " + name + "!").encode())
 	while True:
 		try:
 			message = conn.recv(2048).decode()
@@ -28,7 +28,7 @@ def clientThread(conn, addr, name):
 				PM(conn)
 				
 			if message == "DM":
-				DM(conn)
+				PM(conn)
 
 		except:
 			remove(conn)
@@ -38,21 +38,27 @@ def EX(conn):
 	remove(conn)
 	
 def PM(conn):
-	conn.send(("Please Enter Public Message: ").encode())
+	conn.send(("CPPlease Enter Public Message: ").encode())
 	message = conn.recv(2048).decode()
 	broadcast(message, conn)
 	
-def DM(message):
-	conn.send(("Please Enter Direct Message: ").encode())
+def DM(conn):
+	listUsers = list(clients.values())
+	conn.send(("CPList of online users: ").encode())
+	for x in listUsers:
+		if (myDict.get(conn)) != x:
+			conn.send((user + ", ").encode())
+		conn.send("CPPlease select a user: ")
+			
+	conn.send()
 
 def broadcast(message, connection):
-
+	messageSend = "CB\nIncoming PM: " + message + "\n"
 	for x in clients:
 		if connection != x:
-			message = "Incoming PM: " + message + "\n"
-			x.send(message.encode())
+			x.send(messageSend.encode())
 		else:
-			x.send(("Public Message: '" + message + "' Sent to all users\n").encode())
+			x.send(("CPPublic Message: '" + message + "' Sent to all users\n").encode())
 
 def remove(connection):
 	print(clients[connection] + " disconnected")
