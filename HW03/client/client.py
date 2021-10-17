@@ -18,20 +18,19 @@ def PM():
 	x = input()
 	connection.send(x.encode())
 
-def DM():
+def DMR():
 	print("\n")
 	connection.send(("DM").encode())
-	#listUsers = connection.recv(2048).decode()
-	#print("Online Users: ")
-	#for x in listUsers:
-	#	print(x, ", ")
-	#print("\nEnter User to Send DM to: ")
-	
+	time.sleep(1)
+	user = input("Select a user: ")
+	message = input("Mesage to send: ")
+	serverMessage = user + "|" + message 
+	connection.send(serverMessage.encode())	#Send selected user + message to server.
+
 
 def EX():
 	print("Closing connection.")
 	connection.send(("EX").encode())
-	
 	connection.close()
 	sys.exit()
 
@@ -39,12 +38,11 @@ def userInput():
 	time.sleep(.5)
 	print("Please Enter a command: ")
 	while True:
-		#print("Please enter a command!")
 		x = input()
 		if x == "PM" or x == "Pm" or x == "pM" or x == "pm":
 			PM()
 		elif x == "DM" or x == "Dm" or x == "dM" or x == "dm":
-			DM()
+			DMR()
 		elif x == "EX" or x == "Ex" or x == "eX" or x == "ex":
 			EX()
 		else:
@@ -69,6 +67,11 @@ while True:
 
 			print(message[2:])
 			if(command == 'B' or command == 'P'):
+				print("Please Enter a command: ")
+			if(command == 'D'):
+				message = connection.recv(1024).decode()
+				print(message)
+				#response = connection.recv(1024).decode()
 				print("Please Enter a command: ")
 	except:
 		connection.close()
