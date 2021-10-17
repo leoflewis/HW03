@@ -17,11 +17,16 @@ def PM():
 	connection.send(("PM").encode())
 	x = input()
 	connection.send(x.encode())
-	time.sleep(.5)
 
 def DM():
 	print("\n")
 	connection.send(("DM").encode())
+	#listUsers = connection.recv(2048).decode()
+	#print("Online Users: ")
+	#for x in listUsers:
+	#	print(x, ", ")
+	#print("\nEnter User to Send DM to: ")
+	
 
 def EX():
 	print("Closing connection.")
@@ -31,9 +36,10 @@ def EX():
 	sys.exit()
 
 def userInput():
+	time.sleep(.5)
+	print("Please Enter a command: ")
 	while True:
-
-		print("Please enter a command!")
+		#print("Please enter a command!")
 		x = input()
 		if x == "PM" or x == "Pm" or x == "pM" or x == "pm":
 			PM()
@@ -47,7 +53,7 @@ def userInput():
 
 
 
-thread = Thread(target = userInput)
+thread = Thread(target = userInput, name = 'command')
 thread.start()
 
 
@@ -55,7 +61,15 @@ thread.start()
 while True:
 	try:
 		message = connection.recv(1024).decode()
-		print(message)
+		if(message[0] == 'D'):
+			#print("Caught Data Command")
+			print(message[1:])
+		if(message[0] == 'C'):
+			command = message[1]
+
+			print(message[2:])
+			if(command == 'B' or command == 'P'):
+				print("Please Enter a command: ")
 	except:
 		connection.close()
 		sys.exit()
