@@ -7,7 +7,7 @@ import sys
 
 server = socket(AF_INET, SOCK_STREAM)
 
-serverPort = 56002
+serverPort = int(sys.argv[1])
 server.bind(('',serverPort))
 server.listen(100)
 
