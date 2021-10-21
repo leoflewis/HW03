@@ -13,13 +13,69 @@ server.listen(100)
 
 clients = {}
 
+#passwords are stored 'username;password'
+password_file = "passwords.txt"
+
+#writes new user passwords to file
+def save_passwords(password, name):
+	f = open("passwords.txt", "a")
+	f.write(name + ";" + password + "\n")
+	f.close()
+
+#returns passwords and names from file
+def get_passwords():
+	try:
+		f = open("passwords.txt", "r")
+		lines = f.readlines()
+		passwords = []
+		names = []
+		for line in lines:
+			phrase = line.split(";")
+			passwords.append(phrase)
+			names.append(phrase[0])
+		f.close()
+	except FileNotFoundError:
+		#if password file is removed or deleted, this will build one from scratch with an admin account
+		f = open("passwords.txt", "w")
+		f.write("admin;admin\n")
+		f.close()
+		passwords = []
+		names = []
+	return passwords, names
+
+def login(password, name, conn):
+	passwords, names = get_passwords()
+	if name not in names:
+		#L character denotes login related commands
+		conn.send(("L(New user your password saved)").encode())
+		save_passwords(password, name)
+		return True
+	for word in passwords:
+		if word[0] == name:
+			if password == word[1].replace('\n', ''):
+				print("success")
+				conn.send(("L(Successfully logged on.)").encode())
+				return True
+			else:
+				print("login failed")
+				conn.send(("LFIncorrect password - login failed\n").encode())
+				#client will close when it receives LF
+				return False
+
+
 def clientThread(conn, addr, name):
 	
-	conn.send(("DWelcome to this chatroom " + name + "!").encode())
+	conn.send(("DWelcome to this chatroom " + name + "!\n").encode())
 	while True:
 		#try:
 		message = conn.recv(2048).decode()
 
+		#client sends password in format 'password;<actual password>'
+		if message[0:9] == "password;":
+			result = login(message[9:],name, conn)
+			if result == False:
+				EX(conn)
+				return
 		if message == "EX":
 			EX(conn)
 			return

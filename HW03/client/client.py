@@ -2,7 +2,7 @@
 from socket import *
 from threading import *
 import time
-import sys
+import sys, os
 
 connection = socket(AF_INET, SOCK_STREAM)
 
@@ -34,8 +34,13 @@ def EX():
 	connection.close()
 	sys.exit()
 
+def login(password):
+	connection.send(("password;"+password).encode())
+
 def userInput():
-	time.sleep(.5)
+	time.sleep(1)
+	password = input("enter password: ")
+	login(password)
 	print("Please Enter a command: ")
 	while True:
 		x = input()
@@ -59,6 +64,12 @@ thread.start()
 while True:
 	try:
 		message = connection.recv(1024).decode()
+		if(message[0] == 'L'):
+			if message[1] == 'F':
+				print(message[2:])
+				EX()
+			else:
+				print(message[1:])
 		if(message[0] == 'D'):
 			#print("Caught Data Command")
 			print(message[1:])
