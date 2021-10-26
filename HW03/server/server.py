@@ -47,25 +47,25 @@ def login(password, name, conn):
 	passwords, names = get_passwords()
 	if name not in names:
 		#L character denotes login related commands
-		conn.send(("L(New user your password saved)").encode())
+		conn.send(("L(New user your password saved)\n\nWelcome To The Chatroom!\n").encode())
 		save_passwords(password, name)
 		return True
 	for word in passwords:
 		if word[0] == name:
 			if password == word[1].replace('\n', ''):
 				print("success")
-				conn.send(("L(Successfully logged on.)").encode())
+				conn.send(("L(Successfully logged on.)\n\nWelcome To The Chatroom!\n").encode())
 				return True
 			else:
 				print("login failed")
-				conn.send(("LFIncorrect password - login failed\n").encode())
+				conn.send(("FIncorrect password - login failed\n").encode())
 				#client will close when it receives LF
 				return False
 
 
 def clientThread(conn, addr, name):
 	
-	conn.send(("DWelcome to this chatroom " + name + "!\n").encode())
+	#conn.send(("DWelcome to this chatroom " + name + "!\n").encode())
 	while True:
 		#try:
 		message = conn.recv(2048).decode()
@@ -73,6 +73,7 @@ def clientThread(conn, addr, name):
 		#client sends password in format 'password;<actual password>'
 		if message[0:9] == "password;":
 			result = login(message[9:],name, conn)
+			#conn.send(("DWelcome to this chatroom " + name + "!\n").encode())
 			if result == False:
 				EX(conn)
 				return
@@ -94,14 +95,14 @@ def EX(conn):
 	remove(conn)
 	
 def PM(conn):
-	conn.send(("CPPlease Enter Public Message: ").encode())
+	conn.send(("D\nPlease Enter Public Message: ").encode())
 	message = conn.recv(2048).decode()
 	broadcast(message, conn)
 	
 def DM(conn):
 	listUsers = list(clients.values())
-	message = "CDList of online users:\n"
-	print(message)
+	message = "D~~~~~~~~~~~~~~~~~~~~~~~\nList of online users:\n"
+	#print(message)
 	
 	#create string of avaliable users
 	for x in listUsers:
@@ -110,10 +111,11 @@ def DM(conn):
 		else:
 			sendUser = x
 			
-	print(message)
+	#print(message)
+	message = message + "~~~~~~~~~~~~~~~~~~~~~~~\n"
 	conn.send(message.encode())
 	returnString = conn.recv(2048).decode()
-	print(returnString)
+	#print(returnString)
 	
 	recvUser, recvMessage = returnString.split('|')
 	
@@ -123,19 +125,19 @@ def DM(conn):
 			if recvUser == value:
 				connDM = key
 		
-		conn.send(("CBMessage sent to " + recvUser +"\n").encode())
-		connDM.send(("CB\nDM from " + sendUser + ": " + recvMessage + "\n").encode())
+		conn.send(("CBMessage sent to " + recvUser +"\n-------------------------").encode())
+		connDM.send(("CB\n-------------------------\nDM from " + sendUser + ": " + recvMessage + "\n-------------------------").encode())
 	else:
 		print("Invalid User")
 
 
 def broadcast(message, connection):
-	messageSend = "CB\nIncoming PM: " + message + "\n"
+	messageSend = "CB\n-------------------------\nIncoming PM: " + message + "\n-------------------------"
 	for x in clients:
 		if connection != x:
 			x.send(messageSend.encode())
 		else:
-			x.send(("CPPublic Message: '" + message + "' Sent to all users\n").encode())
+			x.send(("CP\nPublic Message: '" + message + "' Sent to all users\n-------------------------").encode())
 
 def remove(connection):
 	print(clients[connection] + " disconnected")
