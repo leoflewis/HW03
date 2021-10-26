@@ -4,85 +4,90 @@ from threading import *
 import time
 import sys, os
 
+#Create socket connection
 connection = socket(AF_INET, SOCK_STREAM)
 
+#Get server connection data from terminal input
 hostname = str(sys.argv[1])
 port = int(sys.argv[2])
 name = str(sys.argv[3])
+
+#Connect to the server, send given username to server.
 connection.connect((hostname, port))
 connection.send(name.encode())
 
+#Handles sending data for PM messages.
 def PM():
-	print("\n")
-	connection.send(("PM").encode())
+	connection.send(("PM").encode()) 
 	x = input()
 	connection.send(x.encode())
 
-def DMR():
-	print("\n")
+#Handles sending data DM messages.
+def DM():
 	connection.send(("DM").encode())
-	time.sleep(1)
+	time.sleep(1) #wait for 1 second for server to send list of clients.
 	user = input("Select a user: ")
 	message = input("Mesage to send: ")
 	serverMessage = user + "|" + message 
 	connection.send(serverMessage.encode())	#Send selected user + message to server.
 
-
+#Handles closing the client connection + notify server.
 def EX():
 	print("Closing connection.")
 	connection.send(("EX").encode())
 	connection.close()
 	sys.exit()
 
+#Handles login data, closes conneciton if password is deemed false by server (return user).
 def login(password):
 	connection.send(("password;"+password).encode())
+	message = connection.recv(1024).decode()
+	
+	#If rresponse is L, login was successful, begin wait for command phase.
+	if(message[0] == 'L'):
+		print(message[1:])
+		print("Please Enter a command: ")
+
+	#If response is F, login was unsuccessful (return user), exit program.
+	if message[0] == 'F':
+		print(message[1:])
+		connection.close()
+		sys.exit()
 
 def userInput():
-	time.sleep(1)
-	password = input("enter password: ")
-	login(password)
-	print("Please Enter a command: ")
+	#Accepts one of three commands when user is in ready for command state.
 	while True:
 		x = input()
 		if x == "PM" or x == "Pm" or x == "pM" or x == "pm":
 			PM()
 		elif x == "DM" or x == "Dm" or x == "dM" or x == "dm":
-			DMR()
+			DM()
 		elif x == "EX" or x == "Ex" or x == "eX" or x == "ex":
 			EX()
 		else:
 			print("Invalid Command!")
 			continue
 
+#Prompts login functionality.
+password = input("Enter password for " + name + ": ")
+login(password)
 
-
+#Starts the thread that will recieve commands from the user to send to server.
 thread = Thread(target = userInput, name = 'command')
 thread.start()
 
 
-	
+#This loop waits for responses from server, promps user for new command when function is finished.
 while True:
 	try:
 		message = connection.recv(1024).decode()
-		if(message[0] == 'L'):
-			if message[1] == 'F':
-				print(message[2:])
-				EX()
-			else:
-				print(message[1:])
+	
 		if(message[0] == 'D'):
-			#print("Caught Data Command")
 			print(message[1:])
 		if(message[0] == 'C'):
 			command = message[1]
-
 			print(message[2:])
 			if(command == 'B' or command == 'P'):
-				print("Please Enter a command: ")
-			if(command == 'D'):
-				message = connection.recv(1024).decode()
-				print(message)
-				#response = connection.recv(1024).decode()
 				print("Please Enter a command: ")
 	except:
 		connection.close()
