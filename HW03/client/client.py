@@ -5,15 +5,32 @@ import time
 import sys, os
 
 #Create socket connection
-connection = socket(AF_INET, SOCK_STREAM)
+try :
+	connection = socket(AF_INET, SOCK_STREAM)
+except socket.error as e:
+	print ("Error creating socket: " + e)
+	sys.exit()
 
 #Get server connection data from terminal input
-hostname = str(sys.argv[1])
-port = int(sys.argv[2])
-name = str(sys.argv[3])
+try:
+	hostname = str(sys.argv[1])
+	port = int(sys.argv[2])
+	name = str(sys.argv[3])
+except ValueError as e:
+	print("Server Port must be an integer value.")
+	sys.exit()
+
 
 #Connect to the server, send given username to server.
-connection.connect((hostname, port))
+try:	
+	connection.connect((hostname, port))
+except socket.gaierror as e:
+	print("Address related error conencting to server: " + e)
+	sys.exit()
+except socket.error as e:
+	print("Connection Error: " + e)
+	sys.exit()
+	
 connection.send(name.encode())
 
 #Handles sending data for PM messages.
@@ -35,7 +52,7 @@ def DM():
 def EX():
 	print("Closing connection.")
 	connection.send(("EX").encode())
-	connection.close()
+	connection.close() 
 	sys.exit()
 
 #Handles login data, closes conneciton if password is deemed false by server (return user).
@@ -80,14 +97,14 @@ thread.start()
 #This loop waits for responses from server, promps user for new command when function is finished.
 while True:
 	try:
-		message = connection.recv(1024).decode()
+		message = connection.recv(2048).decode()
 	
 		if(message[0] == 'D'):
 			print(message[1:])
 		if(message[0] == 'C'):
 			command = message[1]
 			print(message[2:])
-			if(command == 'B' or command == 'P'):
+			if(command == 'B'):
 				print("Please Enter a command: ")
 	except:
 		connection.close()
