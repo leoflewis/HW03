@@ -5,9 +5,18 @@ from socket import *
 from threading import *
 import sys
 
-server = socket(AF_INET, SOCK_STREAM)
+try:
+	server = socket(AF_INET, SOCK_STREAM)
+except socket.error as e:
+	print("Error creating socket: " + e)
+	sys.exit()
 
-serverPort = int(sys.argv[1])
+try:
+	serverPort = int(sys.argv[1])
+except ValueError as e:
+	print("Server Port must be an int value.")
+	sys.exit()
+
 server.bind(('',serverPort))
 server.listen(100)
 
@@ -137,7 +146,7 @@ def broadcast(message, connection):
 		if connection != x:
 			x.send(messageSend.encode())
 		else:
-			x.send(("CP\nPublic Message: '" + message + "' Sent to all users\n-------------------------").encode())
+			x.send(("CB\nPublic Message: '" + message + "' Sent to all users\n-------------------------").encode())
 
 def remove(connection):
 	print(clients[connection] + " disconnected")
