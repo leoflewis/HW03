@@ -6,6 +6,7 @@
 #When a command is called, the server will recieve / reply to the client for extra data, or to send a message from another user.
 #Colin Bolduc -- DD7266BL
 
+
 from socket import *
 from threading import *
 import sys
@@ -82,41 +83,52 @@ def login(password, name, conn):
 
 #Main client function, will await new commands from the client.
 def clientThread(conn, addr, name):
-	
-	while True:
-		#Recieves command from client, either will be used for login, PM, DM or EX.
-		message = conn.recv(2048).decode()
+	try:
+		while True:
+			#Recieves command from client, either will be used for login, PM, DM or EX.
+			message = conn.recv(2048).decode()
 
-		#client sends password in format 'password;<actual password>'
-		if message[0:9] == "password;":
-			result = login(message[9:],name, conn)
-			if result == False:
+			#client sends password in format 'password;<actual password>'
+			if message[0:9] == "password;":
+				result = login(message[9:],name, conn)
+				if result == False:
+					EX(conn)
+					return
+			if message == "EX":
 				EX(conn)
 				return
-		if message == "EX":
-			EX(conn)
-			return
 
-		if message == "PM":
-			PM(conn)
+			if message == "PM":
+				PM(conn)
 
-		if message == "DM":
-			DM(conn)
+			if message == "DM":
+				DM(conn)
+	except:
+		conn.close()
+		sys.exit()
 
 #Removes active client from active client lists.	
 def EX(conn):
-	remove(conn)
+	conn.send(("CX").encode())#Send a closing message to the client in order to close the listener thread.
+	#print("DEBUG: user left.")
+	conn.close()
+	del clients[conn]
 
 #Sends a Public Message to every other active user, promts requesting user for message.
 def PM(conn):
-	conn.send(("D\nPlease Enter Public Message: ").encode())
+	conn.send(("CPack").encode())
 	message = conn.recv(2048).decode()
-	broadcast(message, conn)
+	messageSend = "D\n\nIncoming PM: " + message + "\n"
+	for x in clients:
+		if conn != x:
+			x.send(messageSend.encode())
+		else:
+			x.send(("CSack").encode())
 
 #Will send a message to one specified user. Will send a list of active users to requester, and send the message to them.
 def DM(conn):
 	listUsers = list(clients.values())
-	message = "D\nList of online users:\n"
+	message = "CI\nList of online users:\n"
 	
 	#create string of avaliable users
 	for x in listUsers:
@@ -127,8 +139,13 @@ def DM(conn):
 			
 	message = message + "\n"
 	conn.send(message.encode())
+	returnAck = conn.recv(1024).decode()
+	if returnAck != "ack":
+		print("Ack noit recv")
+		return
+	conn.send(("CDack").encode())
 	returnString = conn.recv(2048).decode()
-	
+	print(returnString)
 	recvUser, recvMessage = returnString.split('|')
 	
 	if(recvUser in listUsers):
@@ -136,26 +153,17 @@ def DM(conn):
 		for key, value in clients.items():
 			if recvUser == value:
 				connDM = key
-		
-		conn.send(("CBMessage sent to " + recvUser +"\n").encode())
-		connDM.send(("CB\n\nDM from " + sendUser + ": " + recvMessage + "\n").encode())
+		print("break")
+		conn.send(("CMack").encode())
+		print("Sent CMACK")
+		returnAck2 = conn.recv(1024).decode()
+		if returnAck2 != "ack":
+			print("Ack noit recv")
+			return
+		connDM.send(("D\n\nDM from " + sendUser + ": " + recvMessage + "\n").encode())
 	else:
 		print("Invalid User")
 
-#Sends PM to all users other than the requesting user.
-def broadcast(message, connection):
-	messageSend = "CB\n\nIncoming PM: " + message + "\n"
-	for x in clients:
-		if connection != x:
-			x.send(messageSend.encode())
-		else:
-			x.send(("CB\nPublic Message: '" + message + "' Sent to all users\n").encode())
-
-#Removes client from active connections, closes connection.
-def remove(connection):
-	#print(clients[connection] + " disconnected")
-	connection.close()
-	del clients[connection]
 	
 		
 while True:
