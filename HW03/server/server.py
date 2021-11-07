@@ -1,25 +1,34 @@
-#Server
-#get test new branch
+#Server program, Creates a new thread per connected client. Uses specified port number to create socket.
+#When client connectes, the server will see if the username is existing or new.
+#If existing, the server will request the password for the user, and either accept the conenction or deny it.
+#If new, the server will request a password, and save it to the file of users / passwords.
+#Each active client is added to a dictionary conatining the name / socket info.
+#When a command is called, the server will recieve / reply to the client for extra data, or to send a message from another user.
+#Colin Bolduc -- DD7266BL
 
 from socket import *
 from threading import *
 import sys
 
+#attempt to create new socket for server.
 try:
 	server = socket(AF_INET, SOCK_STREAM)
 except socket.error as e:
 	print("Error creating socket: " + e)
 	sys.exit()
 
+#get port from command line when program called. Must be int.
 try:
 	serverPort = int(sys.argv[1])
 except ValueError as e:
 	print("Server Port must be an int value.")
 	sys.exit()
 
+#Bind port to server socket.
 server.bind(('',serverPort))
 server.listen(100)
 
+#New dictionary of active clients.
 clients = {}
 
 #passwords are stored 'username;password'
@@ -71,18 +80,16 @@ def login(password, name, conn):
 				#client will close when it receives LF
 				return False
 
-
+#Main client function, will await new commands from the client.
 def clientThread(conn, addr, name):
 	
-	#conn.send(("DWelcome to this chatroom " + name + "!\n").encode())
 	while True:
-		#try:
+		#Recieves command from client, either will be used for login, PM, DM or EX.
 		message = conn.recv(2048).decode()
 
 		#client sends password in format 'password;<actual password>'
 		if message[0:9] == "password;":
 			result = login(message[9:],name, conn)
-			#conn.send(("DWelcome to this chatroom " + name + "!\n").encode())
 			if result == False:
 				EX(conn)
 				return
@@ -96,22 +103,20 @@ def clientThread(conn, addr, name):
 		if message == "DM":
 			DM(conn)
 
-		#except:
-		#	remove(conn)
-		#	server.close()
-				
+#Removes active client from active client lists.	
 def EX(conn):
 	remove(conn)
-	
+
+#Sends a Public Message to every other active user, promts requesting user for message.
 def PM(conn):
 	conn.send(("D\nPlease Enter Public Message: ").encode())
 	message = conn.recv(2048).decode()
 	broadcast(message, conn)
-	
+
+#Will send a message to one specified user. Will send a list of active users to requester, and send the message to them.
 def DM(conn):
 	listUsers = list(clients.values())
-	message = "D~~~~~~~~~~~~~~~~~~~~~~~\nList of online users:\n"
-	#print(message)
+	message = "D\nList of online users:\n"
 	
 	#create string of avaliable users
 	for x in listUsers:
@@ -120,11 +125,9 @@ def DM(conn):
 		else:
 			sendUser = x
 			
-	#print(message)
-	message = message + "~~~~~~~~~~~~~~~~~~~~~~~\n"
+	message = message + "\n"
 	conn.send(message.encode())
 	returnString = conn.recv(2048).decode()
-	#print(returnString)
 	
 	recvUser, recvMessage = returnString.split('|')
 	
@@ -134,33 +137,36 @@ def DM(conn):
 			if recvUser == value:
 				connDM = key
 		
-		conn.send(("CBMessage sent to " + recvUser +"\n-------------------------").encode())
-		connDM.send(("CB\n-------------------------\nDM from " + sendUser + ": " + recvMessage + "\n-------------------------").encode())
+		conn.send(("CBMessage sent to " + recvUser +"\n").encode())
+		connDM.send(("CB\n\nDM from " + sendUser + ": " + recvMessage + "\n").encode())
 	else:
 		print("Invalid User")
 
-
+#Sends PM to all users other than the requesting user.
 def broadcast(message, connection):
-	messageSend = "CB\n-------------------------\nIncoming PM: " + message + "\n-------------------------"
+	messageSend = "CB\n\nIncoming PM: " + message + "\n"
 	for x in clients:
 		if connection != x:
 			x.send(messageSend.encode())
 		else:
-			x.send(("CB\nPublic Message: '" + message + "' Sent to all users\n-------------------------").encode())
+			x.send(("CB\nPublic Message: '" + message + "' Sent to all users\n").encode())
 
+#Removes client from active connections, closes connection.
 def remove(connection):
-	print(clients[connection] + " disconnected")
+	#print(clients[connection] + " disconnected")
 	connection.close()
 	del clients[connection]
 	
 		
 while True:
+	#Accept new client conenction
 	conn, addr = server.accept()
 	name = conn.recv(1024).decode()
 	
+	#Create a new entry using connection & username data.
 	clients[conn] = name
 	
-	print(name + " connected")
+	#print(name + " connected")
 	thread = Thread(target = clientThread,args = (conn,addr,name))
 	thread.start()
 
