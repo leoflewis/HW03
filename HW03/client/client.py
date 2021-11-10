@@ -6,7 +6,8 @@
 #When DM is called, the server will give a list of other active users, requesting which one will the the target, plus the message. Will confirm status.
 #When EX is called, the client will send EX to the server, and disconnect. The server will remove the client from the active list.
 #Colin Bolduc -- DD7266bl
-#
+#Leonardo Lewis -- XW3440RF
+
 try:
 
 	from socket import *
