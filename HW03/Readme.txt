@@ -14,10 +14,10 @@ To run the client program:
   and the <port-number> is replaced with the port number the server is bound to 
   and <user-name> is replaced with your desired user name.
   
-Once the server is running and a client attempts to connect, the first thing they will prompted for is a password.
+Once the server is running and a client attempts to connect, the first thing they will be prompted for is a password.
 Within the server directory there should be a file named 'passwords.txt' that stores the user name and passwords in the format 
 'user-name;password'. If the file does not exist, the server will build one from scratch and add 'admin;admin' as a default account.
-If a new user logs on, the server will store their password and notify the user of this.
+If a user is loging on for the first time, the server will store their password and notify the user of this.
 If the server has been running previously, it will check within the 'passwords.txt' file to see if there is an entry for the user.
 If user's name is stored with a corresponding password, the server will expect that password. 
 If the password is incorrect the user will not connect and will have to run client.py another time to try again. 
