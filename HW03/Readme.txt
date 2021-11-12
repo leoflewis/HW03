@@ -1,5 +1,8 @@
 Assignment 3 Readme
 
+Colin Bolduc -- DD7266BL
+Leonardo Lewis -- XW3440RF
+
 This project contains a program to run a server and a program to run a client that connects to the server. 
 
 To run the server program:
