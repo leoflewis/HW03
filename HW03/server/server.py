@@ -62,21 +62,27 @@ def get_passwords():
 		names = []
 	return passwords, names
 
+#Handles login procedure
 def login(password, name, conn):
+	#use get_passwords() function to load user / pass.
 	passwords, names = get_passwords()
+	#New user, create password.
 	if name not in names:
 		#L character denotes login related commands
 		conn.send(("L(New user your password saved)\n\nWelcome To The Chatroom!\n").encode())
 		save_passwords(password, name)
 		return True
+	#Existing user, request password.
 	for word in passwords:
 		if word[0] == name:
+		#If correct, login success
 			if password == word[1].replace('\n', ''):
-				print("success")
+				#print("success")
 				conn.send(("L(Successfully logged on.)\n\nWelcome To The Chatroom!\n").encode())
 				return True
+			#If incorrect, login fail.
 			else:
-				print("login failed")
+				#print("login failed")
 				conn.send(("FIncorrect password - login failed\n").encode())
 				#client will close when it receives LF
 				return False
@@ -92,7 +98,8 @@ def clientThread(conn, addr, name):
 			if message[0:9] == "password;":
 				result = login(message[9:],name, conn)
 				if result == False:
-					EX(conn)
+					conn.close()
+					del clients[conn]
 					return
 			if message == "EX":
 				EX(conn)
@@ -118,7 +125,7 @@ def EX(conn):
 def PM(conn):
 	conn.send(("CPack").encode())
 	message = conn.recv(2048).decode()
-	messageSend = "D\n\nIncoming PM: " + message + "\n"
+	messageSend = "D\nIncoming PM: " + message + "\n"
 	for x in clients:
 		if conn != x:
 			x.send(messageSend.encode())
@@ -137,32 +144,31 @@ def DM(conn):
 		else:
 			sendUser = x
 			
-	message = message + "\n"
+	#Send the list of online users to the client, wait for ACK.
 	conn.send(message.encode())
 	returnAck = conn.recv(1024).decode()
 	if returnAck != "ack":
-		print("Ack noit recv")
 		return
+	#Send an ACK to the client to signal the next step.
 	conn.send(("CDack").encode())
 	returnString = conn.recv(2048).decode()
-	print(returnString)
 	recvUser, recvMessage = returnString.split('|')
 	
+	#Check the user requested by the client. If valid, continue, else send fail
 	if(recvUser in listUsers):
-		print("Valid User")
+		#Get the connection data if the user is valid
 		for key, value in clients.items():
 			if recvUser == value:
 				connDM = key
-		print("break")
 		conn.send(("CMack").encode())
-		print("Sent CMACK")
 		returnAck2 = conn.recv(1024).decode()
 		if returnAck2 != "ack":
-			print("Ack noit recv")
 			return
-		connDM.send(("D\n\nDM from " + sendUser + ": " + recvMessage + "\n").encode())
-	else:
-		print("Invalid User")
+		connDM.send(("D\nDM from " + sendUser + ": " + recvMessage + "\n").encode())
+	elif(recvUser not in listUsers):
+		conn.send(("CZack").encode())
+		#returnAck3 = conn.recv(1024).decode()
+		
 
 	
 		
