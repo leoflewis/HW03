@@ -5,7 +5,9 @@
 #When PM is called, the server will recieve the command, and prompt the user for the message to send to other users, and will confirm the status.
 #When DM is called, the server will give a list of other active users, requesting which one will the the target, plus the message. Will confirm status.
 #When EX is called, the client will send EX to the server, and disconnect. The server will remove the client from the active list.
+#When recieving a message, the listener thread will add commands to the queue, or queue messages if the user is busy.
 #Colin Bolduc -- DD7266bl
+#Leonardo Lewis -- XW3440RF
 #
 try:
 
@@ -111,9 +113,9 @@ try:
 			global busy
 			busy = False
 			if len(queue) != 0:
-				print("Message Backlog:\n")
+				print("Message Backlog:")
 				for mes in queue:
-					print(mes[1:] + "\n")
+					print(mes[1:])
 					queue.remove(mes)
 				print("Please Enter A Command: ")
 			x = input()
@@ -128,6 +130,7 @@ try:
 				EX()
 			else:
 				print("Invalid Command!")
+				print("Please Enter A Command: ")
 				continue
 
 	def listener():
@@ -140,7 +143,7 @@ try:
 					#If message is empty, we will not do anything, and instead wait for next message.
 					if (len(message) >= 1):
 
-						#CAtches data messages, if client is currently running a PM, DM or EX command, it will be queued and printed later.
+						#Catches data messages, if client is currently running a PM, DM or EX command, it will be queued and printed later.
 						if(message[0] == 'D'):
 							if busy == False:
 								print(message[1:])

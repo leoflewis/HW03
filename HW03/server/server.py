@@ -5,6 +5,7 @@
 #Each active client is added to a dictionary conatining the name / socket info.
 #When a command is called, the server will recieve / reply to the client for extra data, or to send a message from another user.
 #Colin Bolduc -- DD7266BL
+#Leonardo Lewis -- XW3440RF
 
 
 from socket import *
