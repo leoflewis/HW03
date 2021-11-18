@@ -8,7 +8,7 @@
 #When recieving a message, the listener thread will add commands to the queue, or queue messages if the user is busy.
 #Colin Bolduc -- DD7266bl
 #Leonardo Lewis -- XW3440RF
-#
+
 try:
 
 	from socket import *

@@ -7,7 +7,6 @@
 #Colin Bolduc -- DD7266BL
 #Leonardo Lewis -- XW3440RF
 
-
 from socket import *
 from threading import *
 import sys
